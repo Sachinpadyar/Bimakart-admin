@@ -1,0 +1,89 @@
+.fields-page-container {
+    padding: 0;
+}
+
+.fields-page-header {
+    margin-bottom: 24px;
+}
+
+.fields-page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.fields-page-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.custom-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+}
+
+.ant-card-body {
+    padding: 24px !important;
+}
+
+.field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.field-label .required {
+    color: #ef4444;
+}
+
+.add-field-btn {
+    background-color: #ff6b00 !important;
+    border-color: #ff6b00 !important;
+    height: 40px;
+    padding: 0 24px;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(255, 107, 0, 0.2);
+}
+
+.add-field-btn:hover {
+    background-color: #e65d00 !important;
+    border-color: #e65d00 !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.custom-table .ant-table-thead>tr>th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.custom-table .ant-table-tbody>tr>td {
+    color: #4b5563;
+    font-size: 14px;
+    padding: 16px;
+}
+
+.action-btn {
+    color: #9ca3af;
+    transition: color 0.2s;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    color: #6b7280;
+}
+
+.action-btn.delete:hover {
+    color: #ef4444;
+}
+
+.MaxWidthContainer{
+    max-width: 800px ;
+}

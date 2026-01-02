@@ -1,0 +1,7 @@
+
+
+.MainComponentWrapper {
+    min-height: 600px;
+    padding: 30px 20px;
+    background-color: var(--dashboard-bg);
+}

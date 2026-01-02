@@ -1,0 +1,68 @@
+import {
+    ChevronLeft,
+    ChevronRight
+} from "lucide-react";
+import "./SideBarComponents.css";
+import { Link, useLocation } from "react-router-dom";
+import { dashboardMenuItems } from '../dashboardMenuConfig';
+
+interface SideBarComponentsProps {
+    isCollapsed: boolean;
+    onToggle: () => void;
+}
+
+const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed, onToggle }) => {
+    const location = useLocation();
+
+    const isActive = (path: string) => {
+        if (path === "/dashboard") {
+            return location.pathname === "/dashboard" || location.pathname === "/dashboard/";
+        }
+        return location.pathname.startsWith(path);
+    };
+
+    return (
+        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
+            <div className="sidebar-header">
+                {!isCollapsed && (
+                    <div className="sidebar-logo">
+                        <img src="/logo.png" alt="Bimakart" className="logo-img" />
+                        {/* <span className="logo-text">bimakart.in</span> */}
+                    </div>
+                )}
+                {isCollapsed && (
+                    <div className="sidebar-logo-collapsed">
+                        <img src="/logo.png" alt="Bimakart" className="logo-img-small" />
+                    </div>
+                )}
+                {/* <button
+                    className="sidebar-toggle-btn"
+                    onClick={onToggle}
+                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </button> */}
+            </div>
+
+            <nav className="sidebar-nav">
+                <ul className="sidebar-menu">
+                    {dashboardMenuItems.map((item) => (
+                        <li key={item.id}>
+                            <Link to={item.path} className="sidebar-link">
+                                <button
+                                    className={`sidebar-menu-item ${isActive(item.path) ? 'active' : ''}`}
+                                    title={isCollapsed ? item.label : undefined}
+                                >
+                                    <span className="menu-icon">{item.icon}</span>
+                                    {!isCollapsed && <span className="menu-label">{item.label}</span>}
+                                </button>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+        </div>
+    );
+};
+
+export default SideBarComponents;
