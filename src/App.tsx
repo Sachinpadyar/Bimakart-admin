@@ -6,7 +6,7 @@ import { AllModulesImports } from "./components/DashboardAllComponents/AllModule
 
 function App() {
   const location = useLocation();
-  const isDashboardRoute = location.pathname.toLowerCase().startsWith("/dashboard");
+  // const isDashboardRoute = location.pathname.toLowerCase().startsWith("/dashboard");
 
   return (
     <>
