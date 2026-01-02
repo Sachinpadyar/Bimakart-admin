@@ -1,11 +1,11 @@
 // @ts-check
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate} from "react-router-dom";
 import "./App.css"
 import RouteDashboardComponents from "./components/DashboardAllComponents/RouteDashboardComponents/RouteDashboardComponents";
 import { AllModulesImports } from "./components/DashboardAllComponents/AllModulesImports/AllModulesImports";
 
 function App() {
-  const location = useLocation();
+  // const location = useLocation();
   // const isDashboardRoute = location.pathname.toLowerCase().startsWith("/dashboard");
 
   return (
