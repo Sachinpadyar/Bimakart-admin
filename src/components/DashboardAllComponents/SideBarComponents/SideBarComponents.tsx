@@ -1,12 +1,17 @@
+import {
+    ChevronLeft,
+    ChevronRight
+} from "lucide-react";
 import "./SideBarComponents.css";
 import { Link, useLocation } from "react-router-dom";
 import { dashboardMenuItems } from '../dashboardMenuConfig';
 
 interface SideBarComponentsProps {
     isCollapsed: boolean;
+    onToggle: () => void;
 }
 
-const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed }) => {
+const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed, onToggle }) => {
     const location = useLocation();
 
     const isActive = (path: string) => {
@@ -22,6 +27,7 @@ const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed }) =>
                 {!isCollapsed && (
                     <div className="sidebar-logo">
                         <img src="/logo.png" alt="Bimakart" className="logo-img" />
+                        {/* <span className="logo-text">bimakart.in</span> */}
                     </div>
                 )}
                 {isCollapsed && (
@@ -29,6 +35,13 @@ const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed }) =>
                         <img src="/logo.png" alt="Bimakart" className="logo-img-small" />
                     </div>
                 )}
+                {/* <button
+                    className="sidebar-toggle-btn"
+                    onClick={onToggle}
+                    aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </button> */}
             </div>
 
             <nav className="sidebar-nav">
