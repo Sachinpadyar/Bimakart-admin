@@ -15,12 +15,13 @@ interface Product {
     id: string;
     name: string;
     icon: string;
+    flyer?: string;
     isActive: boolean;
     shortDescription?: string;
     detailedDescription?: string;
     baseProduct?: string;
+    messageTemplate?: string;
     sellingPrice?: string;
-    costPrice?: string;
     formFields?: FormField[];
 }
 
@@ -58,11 +59,12 @@ const ProductListing = () => {
         shortDescription: '',
         detailedDescription: '',
         baseProduct: '',
+        messageTemplate: '',
         sellingPrice: '',
-        costPrice: '',
     });
     const [charCount, setCharCount] = useState(0);
     const [uploadedIcon, setUploadedIcon] = useState<string | null>(null);
+    const [uploadedFlyer, setUploadedFlyer] = useState<string | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
     const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -83,10 +85,14 @@ const ProductListing = () => {
             console.error('Error loading products from localStorage:', error);
         }
 
-        // Load uploaded icon from localStorage
+        // Load uploaded icon and flyer from localStorage
         const savedIcon = localStorage.getItem('productIcon');
         if (savedIcon) {
             setUploadedIcon(savedIcon);
+        }
+        const savedFlyer = localStorage.getItem('productFlyer');
+        if (savedFlyer) {
+            setUploadedFlyer(savedFlyer);
         }
     }, []);
 
@@ -113,31 +119,27 @@ const ProductListing = () => {
     useEffect(() => {
         if (uploadedIcon) {
             try {
-            localStorage.setItem('productIcon', uploadedIcon);
+                localStorage.setItem('productIcon', uploadedIcon);
             } catch (error) {
-                if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-                    notification.error({
-                        message: 'Storage Error',
-                        description: 'The image is too large to save. Please try uploading a smaller image or clear your browser storage.',
-                        duration: 5,
-                        placement: 'topRight',
-                    });
-                    // Remove the icon since it couldn't be saved
-                    setUploadedIcon(null);
-                } else {
-                    notification.error({
-                        message: 'Save Error',
-                        description: 'Failed to save the image. Please try again.',
-                        duration: 4,
-                        placement: 'topRight',
-                    });
-                    console.error('Error saving icon to localStorage:', error);
-                }
+                // Ignore storage errors for temp icons
             }
         } else {
             localStorage.removeItem('productIcon');
         }
     }, [uploadedIcon]);
+
+    // Save flyer to localStorage whenever it changes
+    useEffect(() => {
+        if (uploadedFlyer) {
+            try {
+                localStorage.setItem('productFlyer', uploadedFlyer);
+            } catch (error) {
+                // Ignore storage errors for temp flyer
+            }
+        } else {
+            localStorage.removeItem('productFlyer');
+        }
+    }, [uploadedFlyer]);
 
     // Filter products based on search
     const filteredProducts = products.filter(product =>
@@ -212,11 +214,12 @@ const ProductListing = () => {
                 shortDescription: product.shortDescription || '',
                 detailedDescription: product.detailedDescription || '',
                 baseProduct: product.baseProduct || '',
+                messageTemplate: product.messageTemplate || '',
                 sellingPrice: product.sellingPrice || '',
-                costPrice: product.costPrice || '',
             });
             setCharCount(product.detailedDescription?.length || 0);
             setUploadedIcon(product.icon && product.icon.startsWith('data:') ? product.icon : null);
+            setUploadedFlyer(product.flyer && product.flyer.startsWith('data:') ? product.flyer : null);
             if (product.formFields) {
                 setFormFields(product.formFields);
             }
@@ -233,14 +236,16 @@ const ProductListing = () => {
             shortDescription: '',
             detailedDescription: '',
             baseProduct: '',
+            messageTemplate: '',
             sellingPrice: '',
-            costPrice: '',
         });
         setCharCount(0);
         setUploadedIcon(null);
+        setUploadedFlyer(null);
         setFormFields(initialFormFields);
         setEditingProductId(null);
         localStorage.removeItem('productIcon');
+        localStorage.removeItem('productFlyer');
     };
 
     // Handle add/update product
@@ -286,6 +291,16 @@ const ProductListing = () => {
             return;
         }
 
+        if (!formData.messageTemplate) {
+            notification.error({
+                message: 'Validation Error',
+                description: 'Message Template is required.',
+                duration: 4,
+                placement: 'topRight',
+            });
+            return;
+        }
+
         if (!formData.sellingPrice.trim()) {
             notification.error({
                 message: 'Validation Error',
@@ -307,27 +322,6 @@ const ProductListing = () => {
             return;
         }
 
-        if (!formData.costPrice.trim()) {
-            notification.error({
-                message: 'Validation Error',
-                description: 'Cost Price is required.',
-                duration: 4,
-                placement: 'topRight',
-            });
-            return;
-        }
-
-        const costPriceNum = Number(formData.costPrice);
-        if (isNaN(costPriceNum) || costPriceNum <= 0) {
-            notification.error({
-                message: 'Validation Error',
-                description: 'Please enter a valid cost price (must be a positive number).',
-                duration: 4,
-                placement: 'topRight',
-            });
-            return;
-        }
-
         // Use uploaded icon or default emoji
         const productIcon = uploadedIcon || '📄';
 
@@ -339,11 +333,12 @@ const ProductListing = () => {
                         ...p,
                         name: formData.policyName,
                         icon: productIcon,
+                        flyer: uploadedFlyer || undefined,
                         shortDescription: formData.shortDescription,
                         detailedDescription: formData.detailedDescription,
                         baseProduct: formData.baseProduct,
+                        messageTemplate: formData.messageTemplate,
                         sellingPrice: formData.sellingPrice,
-                        costPrice: formData.costPrice,
                         formFields: [...formFields],
                     }
                     : p
@@ -360,12 +355,13 @@ const ProductListing = () => {
                 id: Date.now().toString(),
                 name: formData.policyName,
                 icon: productIcon,
+                flyer: uploadedFlyer || undefined,
                 isActive: true,
                 shortDescription: formData.shortDescription,
                 detailedDescription: formData.detailedDescription,
                 baseProduct: formData.baseProduct,
+                messageTemplate: formData.messageTemplate,
                 sellingPrice: formData.sellingPrice,
-                costPrice: formData.costPrice,
                 formFields: [...formFields],
             };
             // Add new product at the beginning of the array (top of the list)
@@ -474,11 +470,11 @@ const ProductListing = () => {
 
             // Fallback to original if compression fails
             try {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result as string;
-            if (result) {
-                setUploadedIcon(result);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const result = e.target?.result as string;
+                    if (result) {
+                        setUploadedIcon(result);
                         notification.warning({
                             message: 'Image Loaded (Uncompressed)',
                             description: 'Image was loaded without compression. It may be too large to save.',
@@ -495,7 +491,7 @@ const ProductListing = () => {
                         placement: 'topRight',
                     });
                 };
-        reader.readAsDataURL(file);
+                reader.readAsDataURL(file);
             } catch (fallbackError) {
                 notification.error({
                     message: 'Upload Failed',
@@ -513,13 +509,83 @@ const ProductListing = () => {
         setUploadedIcon(null);
     };
 
-    // Upload props
-    const uploadProps: UploadProps = {
+    // Handle flyer upload
+    const handleFlyerUpload = async (file: File) => {
+        // Check file type
+        if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+            notification.error({
+                message: 'Invalid File Type',
+                description: 'Please upload an image file (JPG, PNG) or PDF.',
+                duration: 4,
+                placement: 'topRight',
+            });
+            return false;
+        }
+
+        // Check file size (limit to 5MB)
+        const maxFileSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxFileSize) {
+            notification.error({
+                message: 'File Too Large',
+                description: `The file is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please upload a file smaller than 5MB.`,
+                duration: 5,
+                placement: 'topRight',
+            });
+            return false;
+        }
+
+        // If it's an image, we can compress it, otherwise just read it
+        try {
+            if (file.type.startsWith('image/')) {
+                const compressedImage = await compressImage(file);
+                setUploadedFlyer(compressedImage);
+            } else {
+                // For PDF or other types, just read as data URL
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setUploadedFlyer(e.target?.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+            notification.success({
+                message: 'Flyer Uploaded',
+                description: 'Flyer has been successfully uploaded.',
+                duration: 3,
+                placement: 'topRight',
+            });
+        } catch (error) {
+            console.error('Error processing flyer:', error);
+            notification.error({
+                message: 'Upload Failed',
+                description: 'Failed to process the flyer. Please try again.',
+                duration: 5,
+                placement: 'topRight',
+            });
+        }
+        return false; // Prevent default upload
+    };
+
+    // Handle flyer remove
+    const handleFlyerRemove = () => {
+        setUploadedFlyer(null);
+    };
+
+    // Upload props for icon
+    const iconUploadProps: UploadProps = {
         name: 'icon',
         listType: 'picture',
         showUploadList: false,
         beforeUpload: handleIconUpload,
         accept: 'image/*',
+    };
+
+    // Upload props for flyer
+    const flyerUploadProps: UploadProps = {
+        name: 'flyer',
+        listType: 'picture',
+        showUploadList: false,
+        beforeUpload: handleFlyerUpload,
+        accept: 'image/*,.pdf',
     };
 
     return (
@@ -541,11 +607,11 @@ const ProductListing = () => {
                             </Title>
 
                             <div className="product-form-content">
-                                {/* Upload Icon */}
-                                <div className='FlexGridSet'>
+                                {/* Top Row: Icon and Flyer */}
+                                <div className="product-media-row">
                                     <div className="product-icon-upload">
                                         <Text className="form-label">Policy Icon</Text>
-                                        <Upload {...uploadProps}>
+                                        <Upload {...iconUploadProps}>
                                             <div className="icon-upload-area">
                                                 <div className="icon-upload-box">
                                                     {uploadedIcon ? (
@@ -555,9 +621,9 @@ const ProductListing = () => {
                                                     )}
                                                 </div>
                                                 <Text className="icon-upload-label">Upload icon</Text>
+                                                <Text className="icon-upload-hint">jpg or png</Text>
                                             </div>
                                         </Upload>
-                                        {/* Small preview below upload area */}
                                         {uploadedIcon && (
                                             <div className="icon-preview-container">
                                                 <div className="icon-preview-wrapper">
@@ -574,8 +640,66 @@ const ProductListing = () => {
                                         )}
                                     </div>
 
-                                    {/* Policy Name */}
-                                    <div className='FlexColumnGap'>
+                                    <div className="product-flyer-upload">
+                                        <Text className="form-label">Policy Flyer</Text>
+                                        <Upload {...flyerUploadProps}>
+                                            <div className="icon-upload-area">
+                                                <div className="icon-upload-box">
+                                                    {uploadedFlyer ? (
+                                                        uploadedFlyer.startsWith('data:application/pdf') ? (
+                                                            <div className="pdf-preview-icon">PDF</div>
+                                                        ) : (
+                                                            <img src={uploadedFlyer} alt="Uploaded flyer" className="icon-preview-large" />
+                                                        )
+                                                    ) : (
+                                                        <ArrowUp size={24} />
+                                                    )}
+                                                </div>
+                                                <Text className="icon-upload-label">Upload flyer</Text>
+                                                <Text className="icon-upload-hint">jpg, png or pdf</Text>
+                                            </div>
+                                        </Upload>
+                                        {uploadedFlyer && (
+                                            <div className="icon-preview-container">
+                                                <div className="icon-preview-wrapper">
+                                                    {uploadedFlyer.startsWith('data:application/pdf') ? (
+                                                        <div className="pdf-preview-small">PDF</div>
+                                                    ) : (
+                                                        <img src={uploadedFlyer} alt="Flyer preview" className="icon-preview-small" />
+                                                    )}
+                                                    <Button
+                                                        type="text"
+                                                        icon={<X size={14} />}
+                                                        onClick={handleFlyerRemove}
+                                                        className="icon-remove-btn"
+                                                        size="small"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Policy Name within the same visual flow but pushed right via flex/grid in CSS if needed, 
+                                        but checking image, it looks like Icon and Flyer are col 1 and 2, 
+                                        and Policy Name is likely a separate block details. 
+                                        Actually image shows Icon and Flyer side by side on left, 
+                                        and Policy Name + Short Desc to the right? 
+                                        No, Image shows:
+                                        Row 1: Policy Icon | Policy Flyer | Policy Name
+                                        Wait, looking at image: 
+                                        "Policy Icon" box, "Policy Flyer" box. 
+                                        To the right of Flyer? "Policy Name". 
+                                        Under Policy Name? "Short Description".
+                                        
+                                        So it's a grid:
+                                        Col 1: Icon
+                                        Col 2: Flyer
+                                        Col 3 (spanning rest): Policy Name (top), Short Description (bottom).
+                                        
+                                        Let's implement this structure.
+                                    */}
+
+                                    <div className="product-basic-info">
                                         <div className="form-field">
                                             <Text className="form-label">Policy Name*</Text>
                                             <Input
@@ -586,7 +710,6 @@ const ProductListing = () => {
                                             />
                                         </div>
 
-                                        {/* Short Description */}
                                         <div className="form-field">
                                             <Text className="form-label">Short Description*</Text>
                                             <Input
@@ -595,6 +718,9 @@ const ProductListing = () => {
                                                 onChange={(e) => handleInputChange('shortDescription', e.target.value)}
                                                 className="product-form-input"
                                             />
+                                            <div style={{ textAlign: 'right' }}>
+                                                <Text className="char-count">50 characters remaining</Text>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -603,19 +729,17 @@ const ProductListing = () => {
                                 <div className="form-field">
                                     <div className="form-label-row">
                                         <Text className="form-label">Detailed Description*</Text>
-                                        <Text className="char-count">{maxChars - charCount} characters remaining</Text>
                                     </div>
                                     <TextArea
                                         placeholder="Enter Detailed Description..."
                                         value={formData.detailedDescription}
                                         onChange={(e) => handleInputChange('detailedDescription', e.target.value)}
                                         rows={3}
-                                        maxLength={maxChars}
                                         className="product-form-textarea"
                                     />
                                 </div>
 
-                                {/* Base Product, Selling Price, Cost Price */}
+                                {/* Base Product, Message Template, Selling Price */}
                                 <Row gutter={12}>
                                     <Col xs={24} sm={8}>
                                         <div className="form-field">
@@ -626,10 +750,27 @@ const ProductListing = () => {
                                                 onChange={(value) => handleInputChange('baseProduct', value)}
                                                 className="product-form-select"
                                                 style={{ width: '100%' }}
+                                                suffixIcon={<ArrowUp size={14} className="rotate-180" />}
                                             >
                                                 <Option value="health">Health Insurance</Option>
                                                 <Option value="vehicle">Vehicle Insurance</Option>
                                                 <Option value="life">Life Insurance</Option>
+                                            </Select>
+                                        </div>
+                                    </Col>
+                                    <Col xs={24} sm={8}>
+                                        <div className="form-field">
+                                            <Text className="form-label">Message Template*</Text>
+                                            <Select
+                                                placeholder="Select a template"
+                                                value={formData.messageTemplate || undefined}
+                                                onChange={(value) => handleInputChange('messageTemplate', value)}
+                                                className="product-form-select"
+                                                style={{ width: '100%' }}
+                                                suffixIcon={<ArrowUp size={14} className="rotate-180" />}
+                                            >
+                                                <Option value="template1">Template 1</Option>
+                                                <Option value="template2">Template 2</Option>
                                             </Select>
                                         </div>
                                     </Col>
@@ -640,22 +781,6 @@ const ProductListing = () => {
                                                 placeholder="Enter Selling Price"
                                                 value={formData.sellingPrice ? Number(formData.sellingPrice) : null}
                                                 onChange={(value) => handleInputChange('sellingPrice', value)}
-                                                className="product-form-input"
-                                                style={{ width: '100%' }}
-                                                min={0}
-                                                step={0.01}
-                                                formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                                                parser={(value) => value ? value.replace(/\$\s?|(,*)/g, '') : ''}
-                                            />
-                                        </div>
-                                    </Col>
-                                    <Col xs={24} sm={8}>
-                                        <div className="form-field">
-                                            <Text className="form-label">Cost Price*</Text>
-                                            <InputNumber
-                                                placeholder="Enter Cost Price"
-                                                value={formData.costPrice ? Number(formData.costPrice) : null}
-                                                onChange={(value) => handleInputChange('costPrice', value)}
                                                 className="product-form-input"
                                                 style={{ width: '100%' }}
                                                 min={0}
@@ -741,8 +866,8 @@ const ProductListing = () => {
                                     </div>
                                 ) : (
                                     filteredProducts.map((product) => (
-                                    <div key={product.id} className="product-item">
-                                        <div className="product-item-left">
+                                        <div key={product.id} className="product-item">
+                                            <div className="product-item-left">
                                                 {product.icon && product.icon.startsWith('data:') ? (
                                                     <img
                                                         src={product.icon}
@@ -750,30 +875,30 @@ const ProductListing = () => {
                                                         className="product-icon-image"
                                                     />
                                                 ) : (
-                                            <div className="product-icon">{product.icon}</div>
+                                                    <div className="product-icon">{product.icon}</div>
                                                 )}
-                                            <Text className="product-name">{product.name}</Text>
+                                                <Text className="product-name">{product.name}</Text>
+                                            </div>
+                                            <div className="product-item-right">
+                                                <Switch
+                                                    checked={product.isActive}
+                                                    onChange={() => handleToggleProduct(product.id)}
+                                                    className="product-toggle"
+                                                />
+                                                <Button
+                                                    type="text"
+                                                    icon={<Edit size={16} />}
+                                                    onClick={() => handleEditProduct(product.id)}
+                                                    className="product-action-btn"
+                                                />
+                                                <Button
+                                                    type="text"
+                                                    icon={<Trash2 size={16} />}
+                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                    className="product-action-btn delete-btn"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="product-item-right">
-                                            <Switch
-                                                checked={product.isActive}
-                                                onChange={() => handleToggleProduct(product.id)}
-                                                className="product-toggle"
-                                            />
-                                            <Button
-                                                type="text"
-                                                icon={<Edit size={16} />}
-                                                onClick={() => handleEditProduct(product.id)}
-                                                className="product-action-btn"
-                                            />
-                                            <Button
-                                                type="text"
-                                                icon={<Trash2 size={16} />}
-                                                onClick={() => handleDeleteProduct(product.id)}
-                                                className="product-action-btn delete-btn"
-                                            />
-                                        </div>
-                                    </div>
                                     ))
                                 )}
                             </div>
