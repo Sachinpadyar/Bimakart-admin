@@ -7,17 +7,12 @@ import './RouteDashboardComponents.css';
 import "../DashboardGlobalCss.css"
 
 const RouteDashboardComponents = () => {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-    const handleSidebarToggle = () => {
-        setIsSidebarCollapsed(!isSidebarCollapsed);
-    };
+    const [isSidebarCollapsed] = useState(false);
 
     return (
         <div className="dashboard-layout">
             <SideBarComponents
                 isCollapsed={isSidebarCollapsed}
-                onToggle={handleSidebarToggle}
             />
             <div
                 className={`dashboard-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}

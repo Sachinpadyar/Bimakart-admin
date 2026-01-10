@@ -1,17 +1,12 @@
-import {
-    ChevronLeft,
-    ChevronRight
-} from "lucide-react";
 import "./SideBarComponents.css";
 import { Link, useLocation } from "react-router-dom";
 import { dashboardMenuItems } from '../dashboardMenuConfig';
 
 interface SideBarComponentsProps {
     isCollapsed: boolean;
-    onToggle: () => void;
 }
 
-const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed, onToggle }) => {
+const SideBarComponents: React.FC<SideBarComponentsProps> = ({ isCollapsed }) => {
     const location = useLocation();
 
     const isActive = (path: string) => {
