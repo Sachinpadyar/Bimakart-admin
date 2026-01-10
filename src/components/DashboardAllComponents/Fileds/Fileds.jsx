@@ -19,16 +19,11 @@ import {
     Modal,
     Radio,
 } from "antd";
-import {
-    EditOutlined,
-    DeleteOutlined,
-    CloseOutlined,
-} from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, CloseOutlined } from "@ant-design/icons";
 import DeleteConfirmModal from "../../ui/DeleteConfirmModal";
 import "./Fileds.css";
 
-const { Typography: AntTypography } = Typography;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
 const Fileds = () => {
@@ -37,12 +32,16 @@ const Fileds = () => {
     const [selectedField, setSelectedField] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [radioValue, setRadioValue] = useState(null);
-    // Form State (used for both Add and Edit via re-initialization)
+
+    // Radio states
+    const [radioValue, setRadioValue] = useState(null); // "Yes" | "No"
+    const [radioOptionalValue, setRadioOptionalValue] = useState(""); // value to store in DB
+
+    // Form State
     const [fieldName, setFieldName] = useState("");
     const [selectedDataType, setSelectedDataType] = useState(null);
-    const [options, setOptions] = useState(["Option 1"]); // Default with one option
-    const [placeholder, setPlaceholder] = useState("");
+    const [options, setOptions] = useState(["Option 1"]);
+    const [placeholder, setPlaceholder] = useState(""); // used as label for radio optional input
 
     // Queries & Mutations
     const [createField, { isLoading: isCreating }] = useCreateFieldMutation();
@@ -55,18 +54,18 @@ const Fileds = () => {
         setSelectedDataType(value);
 
         if (value === "radio") {
-            setOptions(["Yes", "No"]);
+            setOptions(["Yes", "No"]); // only for UI
         } else if (["dropdown", "checkbox", "text"].includes(value)) {
-            // ✅ text now behaves like dropdown visually
             setOptions(["Option 1"]);
         } else {
             setOptions([]);
         }
 
+        // reset extra fields
         setPlaceholder("");
+        setRadioValue(null);
+        setRadioOptionalValue("");
     };
-
-
 
     const handleAddOption = () => {
         setOptions([...options, `Option ${options.length + 1}`]);
@@ -87,25 +86,27 @@ const Fileds = () => {
     const handleEdit = (record) => {
         setEditingId(record._id || record.id || record.key);
         setFieldName(record.fieldName);
+        setSelectedDataType(record.dataType);
 
-        // Handle Options
-        if (["dropdown", "checkbox", "radio"].includes(record.dataType)) {
-            if (
-                record.options &&
-                Array.isArray(record.options) &&
-                record.options.length > 0
-            ) {
+        if (["dropdown", "checkbox", "text"].includes(record.dataType)) {
+            if (Array.isArray(record.options) && record.options.length > 0) {
                 setOptions(record.options);
-            } else if (record.dataType === "radio") {
-                setOptions(["Yes", "No"]);
             } else {
                 setOptions(["Option 1"]);
             }
+            setRadioValue(null);
+            setRadioOptionalValue("");
+        } else if (record.dataType === "radio") {
+            // DB stores: ["Yes"] OR ["Yes","some text"]
+            setRadioValue(record.options?.[0] || null);
+            setRadioOptionalValue(record.options?.[1] || "");
+            setOptions(["Yes", "No"]); // UI fixed
         } else {
             setOptions([]);
+            setRadioValue(null);
+            setRadioOptionalValue("");
         }
 
-        setSelectedDataType(record.dataType);
         setPlaceholder(record.placeholder || "");
         setIsEditModalOpen(true);
     };
@@ -121,6 +122,8 @@ const Fileds = () => {
         setSelectedDataType(null);
         setOptions(["Option 1"]);
         setPlaceholder("");
+        setRadioValue(null);
+        setRadioOptionalValue("");
     };
 
     const handleDelete = (record) => {
@@ -145,17 +148,29 @@ const Fileds = () => {
 
     // --- Submit Handlers ---
     const getPayload = () => {
+         const trimmedPlaceholder = placeholder?.trim();
         return {
             fieldName,
             dataType: selectedDataType,
-            options: ["dropdown", "checkbox"].includes(selectedDataType)
-                ? options.filter((opt) => opt.trim() !== "")
-                : selectedDataType === "radio"
-                    ? ["Yes", "No"]
-                    : undefined,
-            placeholder: ["text", "email", "number", "radio"].includes(selectedDataType)
-                ? placeholder
-                : undefined,
+
+            // ✅ radio stores only selected + optional value
+            options:
+                selectedDataType === "radio"
+                    ? [
+                        radioValue,
+                        ...(trimmedPlaceholder ? [trimmedPlaceholder] : []),
+                    ]
+                    : ["dropdown", "checkbox", "text"].includes(selectedDataType)
+                        ? options.filter((opt) => opt.trim() !== "")
+                        : undefined,
+
+            // ✅ for radio, DO NOT send placeholder separately
+            placeholder:
+                selectedDataType === "radio"
+                    ? undefined
+                    : ["email", "number"].includes(selectedDataType)
+                        ? placeholder
+                        : undefined,
         };
     };
 
@@ -164,6 +179,12 @@ const Fileds = () => {
             message.error("Please fill in all required fields");
             return;
         }
+      if (selectedDataType === "radio" && !placeholder.trim()) {
+  message.error("Please enter text for radio");
+  return;
+}
+
+
         try {
             await createField(getPayload()).unwrap();
             message.success("Field created successfully");
@@ -180,6 +201,11 @@ const Fileds = () => {
             message.error("Please fill in all required fields");
             return;
         }
+        if (selectedDataType === "radio" && !radioValue) {
+            message.error("Please select Yes or No");
+            return;
+        }
+
         try {
             await updateField({ id: editingId, ...getPayload() }).unwrap();
             message.success("Field updated successfully");
@@ -194,6 +220,7 @@ const Fileds = () => {
     // --- Render Helpers ---
     const renderOptionsInputs = () => {
         if (!selectedDataType) return null;
+
         if (selectedDataType === "radio") {
             return (
                 <div style={{ marginTop: 16 }}>
@@ -212,10 +239,20 @@ const Fileds = () => {
                         <Radio value="Yes">Yes</Radio>
                         <Radio value="No">No</Radio>
                     </Radio.Group>
+
+                    {/* ✅ Stored optional value (shows only if label provided) */}
+                    {placeholder?.trim() ? (
+                        <div style={{ marginTop: 12 }}>
+                            <Input
+                                placeholder={placeholder} // label shown here
+                                value={radioOptionalValue} // ✅ stored
+                                onChange={(e) => setRadioOptionalValue(e.target.value)}
+                            />
+                        </div>
+                    ) : null}
                 </div>
             );
         }
-
 
         if (["dropdown", "checkbox", "text"].includes(selectedDataType)) {
             return (
@@ -250,7 +287,6 @@ const Fileds = () => {
                             </div>
                         ))}
 
-                        {/* Add option */}
                         <div className="option-row add-option-row" onClick={handleAddOption}>
                             <span className="option-icon-container">
                                 {selectedDataType === "checkbox" ? (
@@ -265,6 +301,7 @@ const Fileds = () => {
                 </div>
             );
         }
+
         return null;
     };
 
@@ -306,6 +343,7 @@ const Fileds = () => {
 
             <Col span={24}>{renderOptionsInputs()}</Col>
 
+            {/* ✅ Label input for radio optional field */}
             {["email", "number", "radio"].includes(selectedDataType) && (
                 <Col span={24}>
                     <label className="field-label">
@@ -322,7 +360,15 @@ const Fileds = () => {
                         size="large"
                         style={{ borderRadius: "6px" }}
                         value={placeholder}
-                        onChange={(e) => setPlaceholder(e.target.value)}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            setPlaceholder(v);
+
+                            // ✅ if label removed => disable optional input and clear stored value
+                            if (selectedDataType === "radio" && !v.trim()) {
+                                setRadioOptionalValue("");
+                            }
+                        }}
                     />
                 </Col>
             )}
@@ -359,7 +405,6 @@ const Fileds = () => {
 
             <div className="MaxWidthContainer">
                 <Space direction="vertical" size={24} style={{ width: "100%" }}>
-                    {/* Add New Field Section */}
                     <Card
                         className="custom-card"
                         title={<span style={{ fontSize: "16px", fontWeight: 500 }}>Add New Field</span>}
@@ -379,7 +424,6 @@ const Fileds = () => {
                         </div>
                     </Card>
 
-                    {/* Existing Fields Section */}
                     <Card
                         className="custom-card"
                         title={<span style={{ fontSize: "16px", fontWeight: 500 }}>Existing Fields</span>}
@@ -398,7 +442,6 @@ const Fileds = () => {
                 </Space>
             </div>
 
-            {/* Edit Modal */}
             <Modal
                 title="Update Field"
                 open={isEditModalOpen}
