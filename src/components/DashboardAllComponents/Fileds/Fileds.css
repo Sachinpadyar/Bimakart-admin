@@ -84,6 +84,120 @@
     color: #ef4444;
 }
 
-.MaxWidthContainer{
-    max-width: 800px ;
+.MaxWidthContainer {
+    max-width: 800px;
+}
+
+/* Google Form Style Options */
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+    transition: all 0.2s;
+}
+
+.option-number {
+    width: 24px;
+    font-size: 14px;
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.option-google-input {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+    padding: 4px 0;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.option-google-input:focus,
+.option-google-input:hover {
+    border-bottom-color: #ff6b00;
+    /* Theme color */
+    box-shadow: none !important;
+}
+
+.delete-option-btn {
+    opacity: 0;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    padding: 4px;
+}
+
+.option-row:hover .delete-option-btn {
+    opacity: 1;
+}
+
+.delete-option-btn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+    border-radius: 50%;
+}
+
+.add-option-row {
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.add-option-text {
+    color: #9ca3af;
+    font-size: 14px;
+    transition: color 0.2s;
+    border-bottom: 1px dashed transparent;
+}
+
+.add-option-row:hover .add-option-text {
+    color: #ff6b00;
+    border-bottom-color: #ff6b00;
+}
+
+/* Radio Preview Style */
+.radio-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    background-color: transparent;
+}
+
+.read-only-option {
+    border: none !important;
+    background: transparent !important;
+    color: #374151 !important;
+    cursor: default !important;
+    padding-left: 0;
+}
+
+/* Compact Input Styles */
+.ant-input {
+    padding: 8px 12px;
+}
+
+/* Checkbox Preview Style */
+.checkbox-square {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px; /* Square with slight radius */
+    background-color: transparent;
+}
+
+.option-icon-container {
+    width: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
