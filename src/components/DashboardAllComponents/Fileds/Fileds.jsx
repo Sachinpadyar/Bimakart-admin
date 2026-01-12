@@ -148,7 +148,7 @@ const Fileds = () => {
 
     // --- Submit Handlers ---
     const getPayload = () => {
-         const trimmedPlaceholder = placeholder?.trim();
+        const trimmedPlaceholder = placeholder?.trim();
         return {
             fieldName,
             dataType: selectedDataType,
@@ -179,10 +179,10 @@ const Fileds = () => {
             message.error("Please fill in all required fields");
             return;
         }
-      if (selectedDataType === "radio" && !placeholder.trim()) {
-  message.error("Please enter text for radio");
-  return;
-}
+        if (selectedDataType === "radio" && !placeholder.trim()) {
+            message.error("Please enter text for radio");
+            return;
+        }
 
 
         try {
@@ -231,7 +231,7 @@ const Fileds = () => {
                         onChange={(e) => setRadioValue(e.target.value)}
                         style={{
                             display: "flex",
-                            flexDirection: "column",
+                            flexDirection: "row",
                             gap: 8,
                             marginTop: 8,
                         }}
