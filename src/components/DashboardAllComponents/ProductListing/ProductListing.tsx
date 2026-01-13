@@ -701,7 +701,8 @@ const ProductListing = () => {
                                                 {product.policyIcon && product.policyIcon.startsWith('data:') ? (
                                                     <img src={product.policyIcon} alt={product.name} className="product-icon-image" />
                                                 ) : (
-                                                    <div className="product-icon">{product.policyIcon || '🛡️'}</div>
+                                                    // <div className="product-icon">{product.policyIcon || '🛡️'}</div>
+                                                    <></>
                                                 )}
                                                 <Text className="product-name">{product.name}</Text>
                                             </div>
