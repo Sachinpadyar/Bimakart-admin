@@ -156,10 +156,7 @@ const Fileds = () => {
             // ✅ radio stores only selected + optional value
             options:
                 selectedDataType === "radio"
-                    ? [
-                        radioValue,
-                        ...(trimmedPlaceholder ? [trimmedPlaceholder] : []),
-                    ]
+                    ? ["Yes", "No"]
                     : ["dropdown", "checkbox", "text"].includes(selectedDataType)
                         ? options.filter((opt) => opt.trim() !== "")
                         : undefined,
@@ -179,10 +176,7 @@ const Fileds = () => {
             message.error("Please fill in all required fields");
             return;
         }
-        if (selectedDataType === "radio" && !placeholder.trim()) {
-            message.error("Please enter text for radio");
-            return;
-        }
+
 
 
         try {
@@ -201,10 +195,7 @@ const Fileds = () => {
             message.error("Please fill in all required fields");
             return;
         }
-        if (selectedDataType === "radio" && !radioValue) {
-            message.error("Please select Yes or No");
-            return;
-        }
+
 
         try {
             await updateField({ id: editingId, ...getPayload() }).unwrap();
@@ -344,7 +335,7 @@ const Fileds = () => {
             <Col span={24}>{renderOptionsInputs()}</Col>
 
             {/* ✅ Label input for radio optional field */}
-            {["email", "number", "radio"].includes(selectedDataType) && (
+            {["email", "number"].includes(selectedDataType) && (
                 <Col span={24}>
                     <label className="field-label">
                         {selectedDataType === "radio"

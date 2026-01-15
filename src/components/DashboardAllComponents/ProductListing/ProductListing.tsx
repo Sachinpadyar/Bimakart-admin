@@ -9,10 +9,12 @@ import {
     useGetProductsQuery,
     useAddProductMutation,
     useUpdateProductMutation,
-    useToggleProductStatusMutation
+    useToggleProductStatusMutation,
+    useDeleteProductMutation
 } from '../../../redux/api/productsApi';
 import { useUploadFileMutation } from '../../../redux/api/uploadApi';
 import { useGetFieldsQuery } from '../../../redux/api/fieldsApi';
+import EditProductModal from './EditProductModal';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -27,14 +29,7 @@ interface FormField {
 }
 
 // Default fields that always show in the form
-const initialFormFields: FormField[] = [
-    { id: 'age', label: 'Age', required: true, visible: true },
-    { id: 'pan', label: 'PAN Number', required: false, visible: false },
-    { id: 'vehicle', label: 'Vehicle Number', required: true, visible: true },
-    { id: 'accident', label: 'Accident date', required: true, visible: true },
-    { id: 'family', label: 'No. of persons in family', required: false, visible: false },
-    { id: 'hospital', label: 'Hospital name', required: true, visible: true },
-];
+const initialFormFields: FormField[] = [];
 
 const ProductListing = () => {
     // API Queries and Mutations
@@ -50,6 +45,7 @@ const ProductListing = () => {
 
     const [addProduct, { isLoading: isAdding }] = useAddProductMutation();
     const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+    const [deleteProduct] = useDeleteProductMutation();
     const [toggleProductStatus] = useToggleProductStatusMutation();
     const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
     const { data: fieldsResponse } = useGetFieldsQuery(undefined);
@@ -102,10 +98,13 @@ const ProductListing = () => {
     });
     const [charCount, setCharCount] = useState(0);
     const [uploadedIcon, setUploadedIcon] = useState<string | null>(null);
+    const [uploadedIconKey, setUploadedIconKey] = useState<string | null>(null);
     const [uploadedFlyer, setUploadedFlyer] = useState<string | null>(null);
+    const [uploadedFlyerKey, setUploadedFlyerKey] = useState<string | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
-    const [editingProductId, setEditingProductId] = useState<string | null>(null);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
     const [isIconUploading, setIsIconUploading] = useState(false);
     const [isFlyerUploading, setIsFlyerUploading] = useState(false);
     const maxChars = 50;
@@ -164,14 +163,17 @@ const ProductListing = () => {
     };
 
     // Confirm delete
-    const handleConfirmDelete = () => {
-        // Not implemented on API side yet
-        setDeleteModalOpen(false);
-        setProductToDelete(null);
-        notification.info({
-            message: 'feature not available',
-            description: 'Delete functionality is currently disabled.',
-        });
+    const handleConfirmDelete = async () => {
+        if (!productToDelete) return;
+        try {
+            await deleteProduct(productToDelete).unwrap();
+            notification.success({ message: 'Product Deleted', description: 'Product successfully deleted.' });
+        } catch (error: any) {
+            notification.error({ message: 'Delete Failed', description: error.data?.message || 'Failed to delete product.' });
+        } finally {
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+        }
     };
 
     // Cancel delete
@@ -180,51 +182,16 @@ const ProductListing = () => {
         setProductToDelete(null);
     };
 
-    // Handle product edit
+    // Handle product edit - Opens Modal
     const handleEditProduct = (id: string) => {
         const product = products.find((p: any) => p._id === id || p.id === id);
         if (product) {
-            setEditingProductId(product._id || product.id);
-            setFormData({
-                policyName: product.name || '',
-                shortDescription: product.shortDescription || '',
-                detailedDescription: product.detailedDescription || '',
-                baseProduct: product.baseProduct || '',
-                messageTemplate: product.messageTemplateId || '',
-                sellingPrice: product.sellingPrice ? String(product.sellingPrice) : '',
-            });
-            setCharCount(product.detailedDescription?.length || 0);
-            setUploadedIcon(product.policyIcon || null);
-            setUploadedFlyer(product.policyFlyer || null);
-
-            // However, if we saved 'age', 'pan' etc. to the backend previously, we should attempt to restore their state.
-            if (product.fields && Array.isArray(product.fields)) {
-                const mergedFields = initialFormFields.map(initialField => {
-                    const savedField = product.fields.find((pf: any) => {
-                        const pfId = typeof pf.fieldId === 'object' ? (pf.fieldId._id || pf.fieldId.id) : pf.fieldId;
-                        return pfId === initialField.id;
-                    });
-
-                    if (savedField) {
-                        return {
-                            ...initialField,
-                            required: savedField.required,
-                            visible: savedField.visible
-                        };
-                    }
-                    return initialField;
-                });
-                setFormFields(mergedFields);
-            } else {
-                setFormFields(initialFormFields);
-            }
-
-            // Scroll to form
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setEditingProduct(product);
+            setEditModalOpen(true);
         }
     };
 
-    // Handle form reset
+    // Handle form reset (for Add Product)
     const handleResetForm = () => {
         setFormData({
             policyName: '',
@@ -235,13 +202,21 @@ const ProductListing = () => {
             sellingPrice: '',
         });
         setCharCount(0);
+        setCharCount(0);
         setUploadedIcon(null);
+        setUploadedIconKey(null);
         setUploadedFlyer(null);
-        // Reset to initial fields + any loaded dynamic fields
-        // We can trigger a re-sync with API data
-        setFormFields(initialFormFields);
-        // Force update from API effect will handle re-adding dynamic ones on next render or check
-        setEditingProductId(null);
+        setUploadedFlyerKey(null);
+        setUploadedFlyer(null);
+
+        // Reset to just the dynamic fields from API since initialFormFields is empty
+        const resetFields = apiFields.map((field: any) => ({
+            id: field._id || field.id,
+            label: field.fieldName || field.label,
+            required: false,
+            visible: true
+        }));
+        setFormFields(resetFields);
     };
 
     // Handle add/update product
@@ -264,8 +239,8 @@ const ProductListing = () => {
             baseProduct: formData.baseProduct,
             // messageTemplateId removed - not sent in request body (on hold)
             sellingPrice: sellingPriceNum,
-            policyIcon: uploadedIcon || '',
-            policyFlyer: uploadedFlyer || '',
+            policyIcon: uploadedIconKey || uploadedIcon || '',
+            policyFlyer: uploadedFlyerKey || uploadedFlyer || '',
             // Map display fields to real API field IDs
             fields: formFields
                 .filter(f => f.visible)
@@ -276,41 +251,23 @@ const ProductListing = () => {
                         (af._id || af.id) === f.id
                     );
 
-                    // Only return if we have a real API field ID
-                    if (apiField && (apiField._id || apiField.id)) {
-                        return {
-                            fieldId: apiField._id || apiField.id,
-                            required: f.required,
-                            visible: f.visible
-                        };
-                    }
+                    // Use real API ID if found, otherwise fall back to the local ID (e.g. 'age', 'pan')
+                    const finalId = (apiField && (apiField._id || apiField.id))
+                        ? (apiField._id || apiField.id)
+                        : f.id;
 
-                    // If no matching real field found, check if the current ID is already a valid MongoDB ID (24 hex chars)
-                    // This handles dynamic fields that might be fully persisted in state with their ID
-                    const isMongoId = /^[0-9a-fA-F]{24}$/.test(f.id);
-                    if (isMongoId) {
-                        return {
-                            fieldId: f.id,
-                            required: f.required,
-                            visible: f.visible
-                        };
-                    }
-
-                    // If it's a dummy field (like 'age') and no real field maps to it, we exclude it from the payload
-                    // to avoid "Invalid field ID" errors from backend.
-                    return null;
+                    return {
+                        fieldId: finalId,
+                        required: f.required,
+                        visible: f.visible
+                    };
                 })
-                .filter(Boolean) // Remove nulls to ensure no fieldId: null is sent
         };
 
         try {
-            if (editingProductId) {
-                await updateProduct({ id: editingProductId, ...productPayload }).unwrap();
-                notification.success({ message: 'Product Updated', description: 'Product updated successfully.' });
-            } else {
-                await addProduct(productPayload).unwrap();
-                notification.success({ message: 'Product Added', description: 'Product added successfully.' });
-            }
+            // Legacy: edit moved to modal
+            await addProduct(productPayload).unwrap();
+            notification.success({ message: 'Product Added', description: 'Product added successfully.' });
             handleResetForm();
         } catch (error: any) {
             notification.error({
@@ -382,11 +339,13 @@ const ProductListing = () => {
 
             const response = await uploadFile(formData).unwrap();
 
-            // Assuming the API returns { url: 'uploaded-file-url' } or { data: { url: '...' } }
-            const uploadedUrl = response?.url || response?.data?.url || response?.fileUrl;
+            // Handle new response format: { data: { key, previewUrl } }
+            const uploadedKey = response?.data?.key;
+            const previewUrl = response?.data?.previewUrl || response?.url || response?.data?.url;
 
-            if (uploadedUrl) {
-                setUploadedIcon(uploadedUrl);
+            if (previewUrl) {
+                setUploadedIcon(previewUrl);
+                if (uploadedKey) setUploadedIconKey(uploadedKey);
                 notification.success({ message: 'Upload Successful', description: 'Icon uploaded successfully.' });
             } else {
                 throw new Error('No URL returned from upload');
@@ -403,7 +362,10 @@ const ProductListing = () => {
         return false;
     };
 
-    const handleIconRemove = () => setUploadedIcon(null);
+    const handleIconRemove = () => {
+        setUploadedIcon(null);
+        setUploadedIconKey(null);
+    };
 
     // Handle flyer upload
     const handleFlyerUpload = async (file: File) => {
@@ -421,11 +383,13 @@ const ProductListing = () => {
 
             const response = await uploadFile(formData).unwrap();
 
-            // Assuming the API returns { url: 'uploaded-file-url' } or { data: { url: '...' } }
-            const uploadedUrl = response?.url || response?.data?.url || response?.fileUrl;
+            // Handle new response format: { data: { key, previewUrl } }
+            const uploadedKey = response?.data?.key;
+            const previewUrl = response?.data?.previewUrl || response?.url || response?.data?.url;
 
-            if (uploadedUrl) {
-                setUploadedFlyer(uploadedUrl);
+            if (previewUrl) {
+                setUploadedFlyer(previewUrl);
+                if (uploadedKey) setUploadedFlyerKey(uploadedKey);
                 notification.success({ message: 'Upload Successful', description: 'Flyer uploaded successfully.' });
             } else {
                 throw new Error('No URL returned from upload');
@@ -435,14 +399,17 @@ const ProductListing = () => {
             notification.error({
                 message: 'Upload Failed',
                 description: error.data?.message || 'Failed to upload flyer.',
-            }); why
+            });
         } finally {
             setIsFlyerUploading(false);
         }
         return false;
     };
 
-    const handleFlyerRemove = () => setUploadedFlyer(null);
+    const handleFlyerRemove = () => {
+        setUploadedFlyer(null);
+        setUploadedFlyerKey(null);
+    };
 
 
     const iconUploadProps: UploadProps = {
@@ -475,7 +442,7 @@ const ProductListing = () => {
                     <Col xs={24} lg={14}>
                         <Card className="product-form-card">
                             <Title level={4} className="product-form-title">
-                                {editingProductId ? 'Edit Product' : 'Add New Product'}
+                                Add New Product
                             </Title>
 
                             <div className="product-form-content">
@@ -658,7 +625,7 @@ const ProductListing = () => {
                                 {/* Actions */}
                                 <div className="form-actions">
                                     <Button size="large" className="cancel-btn" onClick={handleResetForm}>
-                                        {editingProductId ? 'Cancel Edit' : 'Cancel'}
+                                        Cancel
                                     </Button>
                                     <Button
                                         type="primary"
@@ -668,7 +635,7 @@ const ProductListing = () => {
                                         loading={isAdding || isUpdating || isUploading || isIconUploading || isFlyerUploading}
                                         disabled={isAdding || isUpdating || isUploading || isIconUploading || isFlyerUploading}
                                     >
-                                        {editingProductId ? 'Update Product' : 'Add Product'}
+                                        Add Product
                                     </Button>
                                 </div>
                             </div>
@@ -736,10 +703,18 @@ const ProductListing = () => {
 
             <DeleteConfirmModal
                 open={deleteModalOpen}
-                onCancel={handleCancelDelete}
                 onConfirm={handleConfirmDelete}
-                title="Are you sure you want to delete this product?"
-                message="This action cannot be undone. Once deleted, the product will be permanently removed."
+                onCancel={handleCancelDelete}
+                itemName={products.find((p: any) => p._id === productToDelete || p.id === productToDelete)?.name || 'product'}
+            />
+
+            <EditProductModal
+                open={editModalOpen}
+                onCancel={() => {
+                    setEditModalOpen(false);
+                    setEditingProduct(null);
+                }}
+                product={editingProduct}
             />
         </div>
     );
