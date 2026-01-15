@@ -1,5 +1,5 @@
 //@ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Row, Col, Input, Select, Button, Switch, Checkbox, Typography, Upload, notification, Spin } from 'antd';
 import { ArrowUp, X } from 'lucide-react';
 import type { UploadProps } from 'antd';
@@ -51,15 +51,23 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
     const [isFlyerUploading, setIsFlyerUploading] = useState(false);
 
     const maxChars = 50;
+    const isInitializedRef = useRef(false);
+
+    // Reset initialization when modal closes
+    useEffect(() => {
+        if (!open) {
+            isInitializedRef.current = false;
+        }
+    }, [open]);
 
     // Initialize form with product data
     useEffect(() => {
-        if (product && open) {
+        if (product && open && !isInitializedRef.current) {
             setFormData({
                 policyName: product.name || '',
                 shortDescription: product.shortDescription || '',
                 detailedDescription: product.detailedDescription || '',
-                baseProduct: product.baseProduct || '',
+                baseProduct: product.baseProduct || [], // Default to array for multi-select
                 sellingPrice: product.sellingPrice ? String(product.sellingPrice) : '',
             });
             setCharCount(product.detailedDescription?.length || 0);
@@ -68,24 +76,34 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
             setUploadedFlyer(product.policyFlyer || null);
             setUploadedFlyerKey(null);
 
-            // Re-initialize fields to ensure we don't carry over state from previous edits unnecessarily
-            // but we DO want to merge with API fields.
-            // Ideally, we should also map the product's saved `fields` (from backend) to our `formFields` state
-            // so the checkboxes reflect what is actually saved on the product.
-            // For now, let's reset to defaults + API, then try to apply product overrides if available.
+            // Re-initialize fields
             if (apiFields.length > 0) {
                 syncFields(apiFields);
+                isInitializedRef.current = true;
             }
+        } else if (product && open && !isInitializedRef.current && apiFields.length === 0) {
+            // Case where we are waiting for API fields
+            // We can init form data but wait for fields to mark init complete
+            setFormData({
+                policyName: product.name || '',
+                shortDescription: product.shortDescription || '',
+                detailedDescription: product.detailedDescription || '',
+                baseProduct: product.baseProduct || [],
+                sellingPrice: product.sellingPrice ? String(product.sellingPrice) : '',
+            });
         }
     }, [product, open, apiFields]);
 
     const syncFields = (currentApiFields: any[]) => {
         // Create base fields solely from API
+        // If we have product fields, we should default specific fields to false unless found.
+        // If we DON'T have product fields (maybe old data), we might default to true or false.
+        // Given the user's issue, safe default is likely false usually, OR we handle it in the merge.
         const baseFields: FormField[] = currentApiFields.map((field: any) => ({
             id: field._id || field.id,
             label: field.fieldName || field.label,
             required: false,
-            visible: true
+            visible: true // Default to true, but will be overridden if product.fields exists
         }));
 
         setFormFields(() => {
@@ -107,16 +125,17 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                             visible: savedField.visible
                         };
                     }
-                    return f;
+                    // If product has a fields array but this field isn't in it, it should be hidden
+                    return { ...f, visible: false, required: false };
                 });
             }
             return baseFields;
         });
     };
 
-    const handleInputChange = (field: string, value: string) => {
+    const handleInputChange = (field: string, value: any) => {
         setFormData({ ...formData, [field]: value });
-        if (field === 'detailedDescription') setCharCount(value.length);
+        if (field === 'detailedDescription' && typeof value === 'string') setCharCount(value.length);
     };
 
     const handleIconUpload = async (file: File) => {
@@ -254,14 +273,20 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                     </Col>
                     <Col span={24}>
                         <div className="form-field">
-                            <Text>Detailed Description*</Text>
+                            <Text>Detailed Description</Text>
                             <TextArea rows={3} value={formData.detailedDescription} onChange={e => handleInputChange('detailedDescription', e.target.value)} />
                         </div>
                     </Col>
                     <Col span={12}>
                         <div className="form-field">
                             <Text>Base Product*</Text>
-                            <Select style={{ width: '100%' }} value={formData.baseProduct} onChange={v => handleInputChange('baseProduct', v)}>
+                            <Select
+                                mode="multiple"
+                                style={{ width: '100%' }}
+                                value={formData.baseProduct}
+                                onChange={v => handleInputChange('baseProduct', v)}
+                                maxTagCount="responsive"
+                            >
                                 <Option value="health">Health Insurance</Option>
                                 <Option value="vehicle">Vehicle Insurance</Option>
                                 <Option value="life">Life Insurance</Option>

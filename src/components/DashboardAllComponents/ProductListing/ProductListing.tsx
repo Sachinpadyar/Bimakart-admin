@@ -148,11 +148,12 @@ const ProductListing = () => {
     };
 
     // Handle form input changes
-    const handleInputChange = (field: string, value: string | number | null) => {
-        const stringValue = value === null ? '' : String(value);
-        setFormData({ ...formData, [field]: stringValue });
-        if (field === 'detailedDescription') {
-            setCharCount(stringValue.length);
+    // Handle form input changes
+    const handleInputChange = (field: string, value: any) => {
+        const processedValue = Array.isArray(value) ? value : (value === null ? '' : String(value));
+        setFormData({ ...formData, [field]: processedValue });
+        if (field === 'detailedDescription' && typeof processedValue === 'string') {
+            setCharCount(processedValue.length);
         }
     };
 
@@ -224,8 +225,12 @@ const ProductListing = () => {
         // Validate required fields
         if (!formData.policyName.trim()) return showValidationMsg('Policy Name is required.');
         if (!formData.shortDescription.trim()) return showValidationMsg('Short Description is required.');
-        if (!formData.detailedDescription.trim()) return showValidationMsg('Detailed Description is required.');
-        if (!formData.baseProduct) return showValidationMsg('Base Product is required.');
+        // Detailed Description is now optional
+        // if (!formData.detailedDescription.trim()) return showValidationMsg('Detailed Description is required.');
+        
+        if (!formData.baseProduct || (Array.isArray(formData.baseProduct) && formData.baseProduct.length === 0)) 
+            return showValidationMsg('Base Product is required.');
+        
         // Message Template validation removed - field is on hold
         if (!formData.sellingPrice.trim()) return showValidationMsg('Selling Price is required.');
 
@@ -530,7 +535,7 @@ const ProductListing = () => {
 
                                 {/* Detailed Description */}
                                 <div className="form-field">
-                                    <Text className="form-label">Detailed Description*</Text>
+                                    <Text className="form-label">Detailed Description</Text>
                                     <TextArea
                                         placeholder="Enter Detailed Description..."
                                         value={formData.detailedDescription}
@@ -546,12 +551,14 @@ const ProductListing = () => {
                                         <div className="form-field">
                                             <Text className="form-label">Base Product*</Text>
                                             <Select
+                                                mode="multiple"
                                                 placeholder="Select a category"
-                                                value={formData.baseProduct || undefined}
+                                                value={formData.baseProduct || []}
                                                 onChange={(value) => handleInputChange('baseProduct', value)}
                                                 className="product-form-select"
                                                 style={{ width: '100%' }}
                                                 suffixIcon={<ArrowUp size={14} className="rotate-180" />}
+                                                maxTagCount="responsive"
                                             >
                                                 <Option value="health">Health Insurance</Option>
                                                 <Option value="vehicle">Vehicle Insurance</Option>

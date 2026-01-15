@@ -53,9 +53,7 @@ const Fileds = () => {
     const handleDataTypeChange = (value) => {
         setSelectedDataType(value);
 
-        if (value === "radio") {
-            setOptions(["Yes", "No"]); // only for UI
-        } else if (["dropdown", "checkbox", "text"].includes(value)) {
+        if (["dropdown", "checkbox", "radio"].includes(value)) {
             setOptions(["Option 1"]);
         } else {
             setOptions([]);
@@ -88,23 +86,14 @@ const Fileds = () => {
         setFieldName(record.fieldName);
         setSelectedDataType(record.dataType);
 
-        if (["dropdown", "checkbox", "text"].includes(record.dataType)) {
+        if (["dropdown", "checkbox", "radio"].includes(record.dataType)) {
             if (Array.isArray(record.options) && record.options.length > 0) {
                 setOptions(record.options);
             } else {
                 setOptions(["Option 1"]);
             }
-            setRadioValue(null);
-            setRadioOptionalValue("");
-        } else if (record.dataType === "radio") {
-            // DB stores: ["Yes"] OR ["Yes","some text"]
-            setRadioValue(record.options?.[0] || null);
-            setRadioOptionalValue(record.options?.[1] || "");
-            setOptions(["Yes", "No"]); // UI fixed
         } else {
             setOptions([]);
-            setRadioValue(null);
-            setRadioOptionalValue("");
         }
 
         setPlaceholder(record.placeholder || "");
@@ -148,26 +137,19 @@ const Fileds = () => {
 
     // --- Submit Handlers ---
     const getPayload = () => {
-        const trimmedPlaceholder = placeholder?.trim();
         return {
             fieldName,
             dataType: selectedDataType,
 
-            // ✅ radio stores only selected + optional value
-            options:
-                selectedDataType === "radio"
-                    ? ["Yes", "No"]
-                    : ["dropdown", "checkbox", "text"].includes(selectedDataType)
-                        ? options.filter((opt) => opt.trim() !== "")
-                        : undefined,
+            // ✅ radio, dropdown, checkbox send options
+            options: ["dropdown", "checkbox", "radio"].includes(selectedDataType)
+                ? options.filter((opt) => opt.trim() !== "")
+                : undefined,
 
-            // ✅ for radio, DO NOT send placeholder separately
-            placeholder:
-                selectedDataType === "radio"
-                    ? undefined
-                    : ["email", "number"].includes(selectedDataType)
-                        ? placeholder
-                        : undefined,
+            // ✅ text, email, number send placeholder
+            placeholder: ["text", "email", "number"].includes(selectedDataType)
+                ? placeholder
+                : undefined,
         };
     };
 
@@ -212,40 +194,7 @@ const Fileds = () => {
     const renderOptionsInputs = () => {
         if (!selectedDataType) return null;
 
-        if (selectedDataType === "radio") {
-            return (
-                <div style={{ marginTop: 16 }}>
-                    <Text strong>Options:</Text>
-
-                    <Radio.Group
-                        value={radioValue}
-                        onChange={(e) => setRadioValue(e.target.value)}
-                        style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: 8,
-                            marginTop: 8,
-                        }}
-                    >
-                        <Radio value="Yes">Yes</Radio>
-                        <Radio value="No">No</Radio>
-                    </Radio.Group>
-
-                    {/* ✅ Stored optional value (shows only if label provided) */}
-                    {placeholder?.trim() ? (
-                        <div style={{ marginTop: 12 }}>
-                            <Input
-                                placeholder={placeholder} // label shown here
-                                value={radioOptionalValue} // ✅ stored
-                                onChange={(e) => setRadioOptionalValue(e.target.value)}
-                            />
-                        </div>
-                    ) : null}
-                </div>
-            );
-        }
-
-        if (["dropdown", "checkbox", "text"].includes(selectedDataType)) {
+        if (["dropdown", "checkbox", "radio"].includes(selectedDataType)) {
             return (
                 <div style={{ marginTop: 16 }}>
                     <Text strong>Options:</Text>
@@ -329,40 +278,14 @@ const Fileds = () => {
                     <Option value="checkbox">Checkbox</Option>
                     <Option value="email">Email</Option>
                     <Option value="number">Number</Option>
+                    <Option value="adharCard">Aadhaar Card Number</Option>
+                    <Option value="panCard">Pan Card Number</Option>
                 </Select>
             </Col>
 
             <Col span={24}>{renderOptionsInputs()}</Col>
 
-            {/* ✅ Label input for radio optional field */}
-            {["email", "number"].includes(selectedDataType) && (
-                <Col span={24}>
-                    <label className="field-label">
-                        {selectedDataType === "radio"
-                            ? "Optional Input Label (Leave empty to disable)"
-                            : "Placeholder"}
-                    </label>
-                    <Input
-                        placeholder={
-                            selectedDataType === "radio"
-                                ? "Enter label for extra input (e.g. Reason)..."
-                                : "Enter Placeholder..."
-                        }
-                        size="large"
-                        style={{ borderRadius: "6px" }}
-                        value={placeholder}
-                        onChange={(e) => {
-                            const v = e.target.value;
-                            setPlaceholder(v);
 
-                            // ✅ if label removed => disable optional input and clear stored value
-                            if (selectedDataType === "radio" && !v.trim()) {
-                                setRadioOptionalValue("");
-                            }
-                        }}
-                    />
-                </Col>
-            )}
         </Row>
     );
 
@@ -422,7 +345,11 @@ const Fileds = () => {
                     >
                         <Table
                             columns={columns}
-                            dataSource={Array.isArray(fieldsData) ? fieldsData : fieldsData?.data || []}
+                            dataSource={[
+                                ...(Array.isArray(fieldsData)
+                                    ? fieldsData
+                                    : fieldsData?.data || []),
+                            ].reverse()}
                             loading={isFieldsLoading}
                             pagination={false}
                             className="custom-table"
