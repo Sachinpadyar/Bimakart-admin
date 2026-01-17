@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Input, InputNumber, Select, Button, Switch, Checkbox, Typography, Upload, notification, Spin, Empty } from 'antd';
 import { Search, Edit, Trash2, ArrowUp, X } from 'lucide-react';
 import type { UploadProps } from 'antd';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import DeleteConfirmModal from '../../ui/DeleteConfirmModal';
 import './ProductListing.css';
 import {
@@ -227,10 +229,10 @@ const ProductListing = () => {
         if (!formData.shortDescription.trim()) return showValidationMsg('Short Description is required.');
         // Detailed Description is now optional
         // if (!formData.detailedDescription.trim()) return showValidationMsg('Detailed Description is required.');
-        
-        if (!formData.baseProduct || (Array.isArray(formData.baseProduct) && formData.baseProduct.length === 0)) 
+
+        if (!formData.baseProduct || (Array.isArray(formData.baseProduct) && formData.baseProduct.length === 0))
             return showValidationMsg('Base Product is required.');
-        
+
         // Message Template validation removed - field is on hold
         if (!formData.sellingPrice.trim()) return showValidationMsg('Selling Price is required.');
 
@@ -536,12 +538,32 @@ const ProductListing = () => {
                                 {/* Detailed Description */}
                                 <div className="form-field">
                                     <Text className="form-label">Detailed Description</Text>
-                                    <TextArea
-                                        placeholder="Enter Detailed Description..."
+                                    <ReactQuill
+                                        theme="snow"
                                         value={formData.detailedDescription}
-                                        onChange={(e) => handleInputChange('detailedDescription', e.target.value)}
-                                        rows={3}
-                                        className="product-form-textarea"
+                                        onChange={(value) => handleInputChange('detailedDescription', value)}
+                                        placeholder="Enter Detailed Description..."
+                                        modules={{
+                                            toolbar: [
+                                                [{ 'header': [1, 2, 3, false] }],
+                                                ['bold', 'italic', 'underline'],
+                                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                                ['link'],
+                                                [{ 'color': [] }, { 'background': [] }],
+                                                ['clean']
+                                            ]
+                                        }}
+                                        formats={[
+                                            'header',
+                                            'bold', 'italic', 'underline',
+                                            'list', 'bullet',
+                                            'link',
+                                            'color', 'background'
+                                        ]}
+                                        style={{
+                                            backgroundColor: '#fff',
+                                            borderRadius: '6px'
+                                        }}
                                     />
                                 </div>
 

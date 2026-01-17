@@ -146,8 +146,8 @@ const Fileds = () => {
                 ? options.filter((opt) => opt.trim() !== "")
                 : undefined,
 
-            // ✅ text, email, number send placeholder
-            placeholder: ["text", "email", "number"].includes(selectedDataType)
+            // ✅ text, email, number, calendar send placeholder
+            placeholder: ["text", "email", "number", "calendar"].includes(selectedDataType)
                 ? placeholder
                 : undefined,
         };
@@ -278,6 +278,7 @@ const Fileds = () => {
                     <Option value="checkbox">Checkbox</Option>
                     <Option value="email">Email</Option>
                     <Option value="number">Number</Option>
+                    <Option value="calendar">Calendar</Option>
                     <Option value="adharCard">Aadhaar Card Number</Option>
                     <Option value="panCard">Pan Card Number</Option>
                 </Select>
