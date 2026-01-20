@@ -1,7 +1,7 @@
 //@ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Row, Col, Input, Select, Button, Switch, Checkbox, Typography, Upload, notification, Spin } from 'antd';
-import { ArrowUp, X } from 'lucide-react';
+import { ArrowUp, X, FileText, Image as ImageIcon } from 'lucide-react';
 import type { UploadProps } from 'antd';
 import { useUpdateProductMutation } from '../../../redux/api/productsApi';
 import { useUploadFileMutation } from '../../../redux/api/uploadApi';
@@ -71,10 +71,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                 sellingPrice: product.sellingPrice ? String(product.sellingPrice) : '',
             });
             setCharCount(product.detailedDescription?.length || 0);
-            setUploadedIcon(product.policyIcon || null);
-            setUploadedIconKey(null); // Reset key on open, as we rely on existing URL unless changed
-            setUploadedFlyer(product.policyFlyer || null);
-            setUploadedFlyerKey(null);
+
+            // Use signed URLs for preview if available, otherwise fallback (which likely won't show if private)
+            setUploadedIcon(product.policyIconUrl || product.policyIcon || null);
+            setUploadedIconKey(product.policyIcon || null); // Keep the key for submission if no new upload
+
+            setUploadedFlyer(product.policyFlyerUrl || product.policyFlyer || null);
+            setUploadedFlyerKey(product.policyFlyer || null);
 
             // Re-initialize fields
             if (apiFields.length > 0) {
@@ -185,6 +188,22 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
         return false;
     };
 
+
+    const getFileName = (url: string) => {
+        if (!url) return '';
+        // If it's a signed URL from product, user might want to show the original clean name
+        const cleanUrl = url.split('?')[0];
+        const parts = cleanUrl.split('__');
+        if (parts.length > 1) return parts[1];
+        return cleanUrl.split('/').pop() || cleanUrl;
+    };
+
+    const getDisplayUrl = (url: string | null) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('blob:')) return url;
+        return `https://bimakart-directory.s3.ap-south-1.amazonaws.com/${url}`;
+    };
+
     const handleSubmit = async () => {
         if (!product) return;
 
@@ -195,8 +214,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
             baseProduct: formData.baseProduct,
             sellingPrice: Number(formData.sellingPrice),
             sellingPrice: Number(formData.sellingPrice),
-            policyIcon: uploadedIconKey || uploadedIcon || '',
-            policyFlyer: uploadedFlyerKey || uploadedFlyer || '',
+            sellingPrice: Number(formData.sellingPrice),
+            policyIcon: uploadedIconKey || (uploadedIcon === product.policyIconUrl ? product.policyIcon : uploadedIcon) || '',
+            policyFlyer: uploadedFlyerKey || (uploadedFlyer === product.policyFlyerUrl ? product.policyFlyer : uploadedFlyer) || '',
             fields: formFields
                 .filter(f => f.visible)
                 .map(f => {
@@ -301,26 +321,98 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                     </Col>
                 </Row>
 
-                <div className="product-media" style={{ margin: '20px 0' }}>
-                    <Text strong>Media</Text>
-                    <Row gutter={16}>
+                <div className="product-media" style={{ margin: '24px 0' }}>
+                    <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>Media</Text>
+                    <Row gutter={24}>
                         <Col span={12}>
-                            <Text>Policy Icon</Text>
-                            <Upload {...iconUploadProps} disabled={isIconUploading}>
-                                <div style={{ border: '1px dashed #d9d9d9', padding: 20, textAlign: 'center', cursor: 'pointer', background: '#fafafa' }}>
-                                    {isIconUploading ? <Spin /> : uploadedIcon ? <img src={uploadedIcon} style={{ height: 40 }} /> : <ArrowUp />}
-                                    <div style={{ marginTop: 8 }}>Click to Upload</div>
-                                </div>
-                            </Upload>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text style={{ marginBottom: 8, fontWeight: 500 }}>Policy Icon</Text>
+                                <Upload {...iconUploadProps} disabled={isIconUploading} style={{ width: '100%' }}>
+                                    <div style={{
+                                        border: '1px dashed #d9d9d9',
+                                        borderRadius: 8,
+                                        padding: 20,
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        background: '#fafafa',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: 140,
+                                        width: '100%'
+                                    }}>
+                                        {isIconUploading ? (
+                                            <Spin />
+                                        ) : uploadedIcon ? (
+                                            <>
+                                                <img src={getDisplayUrl(uploadedIcon)} style={{ height: 60, objectFit: 'contain', marginBottom: 12 }} />
+                                                <div style={{ fontSize: 12, color: '#666', wordBreak: 'break-all', padding: '0 8px', width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {getFileName(uploadedIcon)}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div style={{
+                                                    width: 40, height: 40, borderRadius: '50%', background: '#fff',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    border: '1px solid #eee', marginBottom: 12
+                                                }}>
+                                                    <ArrowUp size={20} color="#666" />
+                                                </div>
+                                                <div style={{ color: '#666' }}>Click to Upload</div>
+                                            </>
+                                        )}
+                                    </div>
+                                </Upload>
+                            </div>
                         </Col>
                         <Col span={12}>
-                            <Text>Policy Flyer</Text>
-                            <Upload {...flyerUploadProps} disabled={isFlyerUploading}>
-                                <div style={{ border: '1px dashed #d9d9d9', padding: 20, textAlign: 'center', cursor: 'pointer', background: '#fafafa' }}>
-                                    {isFlyerUploading ? <Spin /> : uploadedFlyer ? (uploadedFlyer.includes('pdf') ? 'PDF' : <img src={uploadedFlyer} style={{ height: 40 }} />) : <ArrowUp />}
-                                    <div style={{ marginTop: 8 }}>Click to Upload</div>
-                                </div>
-                            </Upload>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text style={{ marginBottom: 8, fontWeight: 500 }}>Policy Flyer</Text>
+                                <Upload {...flyerUploadProps} disabled={isFlyerUploading} style={{ width: '100%' }}>
+                                    <div style={{
+                                        border: '1px dashed #d9d9d9',
+                                        borderRadius: 8,
+                                        padding: 20,
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        background: '#fafafa',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: 140,
+                                        width: '100%'
+                                    }}>
+                                        {isFlyerUploading ? (
+                                            <Spin />
+                                        ) : uploadedFlyer ? (
+                                            <>
+                                                {uploadedFlyer.toLowerCase().includes('.pdf') ? (
+                                                    <FileText size={50} color="#555" style={{ marginBottom: 12 }} />
+                                                ) : (
+                                                    <img src={getDisplayUrl(uploadedFlyer)} style={{ height: 60, objectFit: 'contain', marginBottom: 12 }} />
+                                                )}
+                                                <div style={{ fontSize: 12, color: '#666', wordBreak: 'break-all', padding: '0 8px', width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {getFileName(uploadedFlyer)}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div style={{
+                                                    width: 40, height: 40, borderRadius: '50%', background: '#fff',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    border: '1px solid #eee', marginBottom: 12
+                                                }}>
+                                                    <ArrowUp size={20} color="#666" />
+                                                </div>
+                                                <div style={{ color: '#666' }}>Click to Upload</div>
+                                            </>
+                                        )}
+                                    </div>
+                                </Upload>
+                            </div>
                         </Col>
                     </Row>
                 </div>
