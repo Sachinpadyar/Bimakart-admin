@@ -17,6 +17,7 @@ import {
 import { useUploadFileMutation } from '../../../redux/api/uploadApi';
 import { useGetFieldsQuery } from '../../../redux/api/fieldsApi';
 import EditProductModal from './EditProductModal';
+import { useGetSalesforceTokenMutation, useGetSalesforceProductsMutation } from '../../../redux/api/salesforceApi';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -51,6 +52,11 @@ const ProductListing = () => {
     const [toggleProductStatus] = useToggleProductStatusMutation();
     const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
     const { data: fieldsResponse } = useGetFieldsQuery(undefined);
+    const [getSalesforceToken] = useGetSalesforceTokenMutation();
+    const [getSalesforceProducts, { isLoading: isFetchingSFProducts }] = useGetSalesforceProductsMutation();
+
+    // Salesforce Products state
+    const [salesforceProducts, setSalesforceProducts] = useState<any[]>([]);
 
     // Extract real fields from API for mapping to backend IDs
     const apiFields = fieldsResponse?.data || [];
@@ -577,14 +583,48 @@ const ProductListing = () => {
                                                 placeholder="Select a category"
                                                 value={formData.baseProduct || []}
                                                 onChange={(value) => handleInputChange('baseProduct', value)}
+                                                onDropdownVisibleChange={async (open) => {
+                                                    if (open && salesforceProducts.length === 0) {
+                                                        try {
+                                                            // Step 1: Get Token
+                                                            const tokenData = await getSalesforceToken(undefined).unwrap();
+                                                            const token = tokenData.access_token;
+
+                                                            // Step 2: Get Products using Token
+                                                            const products = await getSalesforceProducts({ token }).unwrap();
+                                                            setSalesforceProducts(Array.isArray(products) ? products : []);
+
+                                                            notification.success({
+                                                                message: 'Salesforce Sync',
+                                                                description: 'Successfully fetched products from Salesforce.',
+                                                                placement: 'topRight'
+                                                            });
+                                                        } catch (error) {
+                                                            console.error('Salesforce Auth/Fetch Error:', error);
+                                                            notification.error({
+                                                                message: 'Salesforce Error',
+                                                                description: 'Failed to sync with Salesforce.',
+                                                                placement: 'topRight'
+                                                            });
+                                                        }
+                                                    }
+                                                }}
+                                                loading={isFetchingSFProducts}
                                                 className="product-form-select"
                                                 style={{ width: '100%' }}
                                                 suffixIcon={<ArrowUp size={14} className="rotate-180" />}
                                                 maxTagCount="responsive"
                                             >
-                                                <Option value="health">Health Insurance</Option>
-                                                <Option value="vehicle">Vehicle Insurance</Option>
-                                                <Option value="life">Life Insurance</Option>
+                                                {salesforceProducts.map((p: any, index: number) => (
+                                                    <Option key={index} value={p.name}>{p.name}</Option>
+                                                ))}
+                                                {salesforceProducts.length === 0 && !isFetchingSFProducts && (
+                                                    <>
+                                                        <Option value="health">Health Insurance</Option>
+                                                        <Option value="vehicle">Vehicle Insurance</Option>
+                                                        <Option value="life">Life Insurance</Option>
+                                                    </>
+                                                )}
                                             </Select>
                                         </div>
                                     </Col>
