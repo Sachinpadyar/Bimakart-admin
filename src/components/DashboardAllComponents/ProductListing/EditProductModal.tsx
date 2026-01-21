@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Row, Col, Input, Select, Button, Switch, Checkbox, Typography, Upload, notification, Spin } from 'antd';
 import { ArrowUp, X, FileText, Image as ImageIcon } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import type { UploadProps } from 'antd';
 import { useUpdateProductMutation } from '../../../redux/api/productsApi';
 import { useUploadFileMutation } from '../../../redux/api/uploadApi';
@@ -294,7 +296,33 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                     <Col span={24}>
                         <div className="form-field">
                             <Text>Detailed Description</Text>
-                            <TextArea rows={3} value={formData.detailedDescription} onChange={e => handleInputChange('detailedDescription', e.target.value)} />
+                            <ReactQuill
+                                theme="snow"
+                                value={formData.detailedDescription}
+                                onChange={(value) => handleInputChange('detailedDescription', value)}
+                                placeholder="Enter Detailed Description..."
+                                modules={{
+                                    toolbar: [
+                                        [{ 'header': [1, 2, 3, false] }],
+                                        ['bold', 'italic', 'underline'],
+                                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                        ['link'],
+                                        [{ 'color': [] }, { 'background': [] }],
+                                        ['clean']
+                                    ]
+                                }}
+                                formats={[
+                                    'header',
+                                    'bold', 'italic', 'underline',
+                                    'list', 'bullet',
+                                    'link',
+                                    'color', 'background'
+                                ]}
+                                style={{
+                                    backgroundColor: '#fff',
+                                    borderRadius: '6px'
+                                }}
+                            />
                         </div>
                     </Col>
                     <Col span={12}>

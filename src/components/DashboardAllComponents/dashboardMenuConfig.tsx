@@ -2,10 +2,12 @@
 import {
     LayoutDashboard,
     FileText,
-    List
+    List,
+    CreditCard
 } from "lucide-react";
 import ProductListing from './ProductListing/ProductListing';
 import Fileds from './Fileds/Fileds';
+import OfflineIssuance from './OfflineIssuance/OfflineIssuance';
 
 export interface MenuItemConfig {
     id: string;
@@ -23,11 +25,19 @@ export const dashboardMenuItems: MenuItemConfig[] = [
         path: "/dashboard/product-listing",
         component: ProductListing
     },
+    
     {
         id: "form-fields",
         label: "Form Fields",
         icon: <List size={20} />,
         path: "/dashboard/fields",
         component: Fileds
+    },
+    {
+        id: "offline-issuance",
+        label: "Offline Issuance",
+        icon: <CreditCard size={20} />,
+        path: "/dashboard/offline-issuance",
+        component: OfflineIssuance
     },
 ];

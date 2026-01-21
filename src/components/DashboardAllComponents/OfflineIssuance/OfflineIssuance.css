@@ -1,0 +1,185 @@
+.offline-issuance-wrapper {
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.offline-issuance-header {
+    margin-bottom: 24px;
+}
+
+.offline-issuance-subtitle {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Filter Bar Styles */
+.filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.search-input {
+    width: 280px;
+    border-radius: 8px;
+    height: 40px;
+}
+
+.filter-select {
+    width: 180px;
+}
+
+.filter-select .ant-select-selector {
+    border-radius: 8px !important;
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+}
+
+.filter-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+}
+
+/* Issuance Card Styles */
+.offline-issuance-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.issuance-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.send-all-btn {
+    background-color: #ff6b00 !important;
+    border-color: #ff6b00 !important;
+    border-radius: 6px;
+    height: 36px;
+    font-weight: 500;
+}
+
+/* Issuance Table Styles */
+.issuance-table-container {
+    padding: 0;
+}
+
+.issuance-table-header {
+    display: flex;
+    background-color: #f4f3f8;
+    padding: 12px 24px;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 1px solid #eee;
+}
+
+.issuance-table-row {
+    display: flex;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    align-items: flex-start;
+}
+
+.issuance-table-row:last-child {
+    border-bottom: none;
+}
+
+.col-agent,
+.col-customer {
+    flex: 1.2;
+    padding-right: 15px;
+}
+
+.col-online,
+.col-offline {
+    flex: 2;
+    padding-right: 15px;
+}
+
+.col-action {
+    flex: 0.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.primary-text {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.secondary-text {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.product-info-block,
+.offline-input-block {
+    margin-bottom: 16px;
+}
+
+.product-info-block:last-child,
+.offline-input-block:last-child {
+    margin-bottom: 0;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #444;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.policy-number {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.policy-url {
+    background-color: #f4f3f8;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #555;
+    display: inline-block;
+}
+
+.offline-input {
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.send-btn {
+    background-color: #ff6b00 !important;
+    border-color: #ff6b00 !important;
+    border-radius: 6px;
+    padding: 4px 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

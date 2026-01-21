@@ -1,0 +1,22 @@
+/* InUseModal specifically reuses DeleteConfirmModal styles for consistency */
+
+.in-use-modal .delete-modal-header {
+    background-color: #ff6b00;
+}
+
+.in-use-modal .delete-icon-container {
+    background-color: #ff6b00;
+}
+
+.in-use-modal .delete-modal-confirm-btn {
+    background-color: #ff6b00;
+}
+
+.in-use-modal .delete-modal-confirm-btn:hover {
+    background-color: #e55a00;
+}
+
+/* Ensure the OK button is centered if it's the only action */
+.in-use-modal .delete-modal-actions {
+    justify-content: center;
+}

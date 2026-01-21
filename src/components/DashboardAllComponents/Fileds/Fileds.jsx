@@ -5,6 +5,7 @@ import {
     useDeleteFieldMutation,
     useUpdateFieldMutation,
 } from "../../../redux/api/fieldsApi";
+import { useGetProductsQuery } from "../../../redux/api/productsApi";
 import {
     Card,
     Input,
@@ -21,6 +22,7 @@ import {
 } from "antd";
 import { EditOutlined, DeleteOutlined, CloseOutlined } from "@ant-design/icons";
 import DeleteConfirmModal from "../../ui/DeleteConfirmModal";
+import InUseModal from "../../ui/InUseModal";
 import "./Fileds.css";
 
 const { Text } = Typography;
@@ -29,6 +31,7 @@ const { Option } = Select;
 const Fileds = () => {
     // State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isInUseModalOpen, setIsInUseModalOpen] = useState(false);
     const [selectedField, setSelectedField] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -48,6 +51,9 @@ const Fileds = () => {
     const [updateField, { isLoading: isUpdating }] = useUpdateFieldMutation();
     const [deleteField] = useDeleteFieldMutation();
     const { data: fieldsData, isLoading: isFieldsLoading } = useGetFieldsQuery();
+    const { data: productsResponse } = useGetProductsQuery();
+
+    const products = productsResponse?.data || productsResponse || [];
 
     // --- Options Logic ---
     const handleDataTypeChange = (value) => {
@@ -116,8 +122,25 @@ const Fileds = () => {
     };
 
     const handleDelete = (record) => {
+        const fieldId = record._id || record.id || record.key;
+
+        // Check if the field is in use and visible in any policy
+        const isInUse = products.some((product) => {
+            return product.fields?.some((f) => {
+                const fId = (typeof f.fieldId === 'object' && f.fieldId !== null)
+                    ? (f.fieldId._id || f.fieldId.id)
+                    : f.fieldId;
+                return fId === fieldId && f.visible === true;
+            });
+        });
+
         setSelectedField(record);
-        setIsDeleteModalOpen(true);
+
+        if (isInUse) {
+            setIsInUseModalOpen(true);
+        } else {
+            setIsDeleteModalOpen(true);
+        }
     };
 
     const confirmDelete = async () => {
@@ -379,6 +402,11 @@ const Fileds = () => {
                 onConfirm={confirmDelete}
                 title="Delete Field"
                 message={`Are you sure you want to delete the field "${selectedField?.fieldName}"? This action cannot be undone.`}
+            />
+
+            <InUseModal
+                open={isInUseModalOpen}
+                onOk={() => setIsInUseModalOpen(false)}
             />
         </div>
     );
