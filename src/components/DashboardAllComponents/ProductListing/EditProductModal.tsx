@@ -5,10 +5,10 @@ import { ArrowUp, X, FileText, Image as ImageIcon } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import type { UploadProps } from 'antd';
-import { useUpdateProductMutation } from '../../../redux/api/productsApi';
+import { useUpdateProductMutation, useGetBaseProductsQuery } from '../../../redux/api/productsApi';
 import { useUploadFileMutation } from '../../../redux/api/uploadApi';
 import { useGetFieldsQuery } from '../../../redux/api/fieldsApi';
-import { useGetSalesforceTokenMutation, useGetSalesforceProductsMutation } from '../../../redux/api/salesforceApi';
+// Salesforce imports removed
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -34,10 +34,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
     const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
     const [uploadFile] = useUploadFileMutation();
     const { data: fieldsResponse } = useGetFieldsQuery(undefined);
-    const [getSalesforceToken] = useGetSalesforceTokenMutation();
-    const [getSalesforceProducts, { isLoading: isFetchingSFProducts }] = useGetSalesforceProductsMutation();
 
-    const [salesforceProducts, setSalesforceProducts] = useState<any[]>([]);
+    // Base Products Query
+    const { data: baseProductsResponse, isLoading: isBaseProductsLoading } = useGetBaseProductsQuery(undefined);
+    const baseProductsList = baseProductsResponse?.data || [];
+
 
     const apiFields = fieldsResponse?.data || [];
 
@@ -338,45 +339,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                                 style={{ width: '100%' }}
                                 value={formData.baseProduct}
                                 onChange={v => handleInputChange('baseProduct', v)}
-                                onDropdownVisibleChange={async (open) => {
-                                    if (open && salesforceProducts.length === 0) {
-                                        try {
-                                            // Step 1: Get Token
-                                            const tokenData = await getSalesforceToken(undefined).unwrap();
-                                            const token = tokenData.access_token;
-
-                                            // Step 2: Get Products using Token
-                                            const products = await getSalesforceProducts({ token }).unwrap();
-                                            setSalesforceProducts(Array.isArray(products) ? products : []);
-
-                                            notification.success({
-                                                message: 'Salesforce Sync',
-                                                description: 'Successfully fetched products from Salesforce.',
-                                                placement: 'topRight'
-                                            });
-                                        } catch (error) {
-                                            console.error('Salesforce Auth/Fetch Error:', error);
-                                            notification.error({
-                                                message: 'Salesforce Error',
-                                                description: 'Failed to sync with Salesforce.',
-                                                placement: 'topRight'
-                                            });
-                                        }
-                                    }
-                                }}
-                                loading={isFetchingSFProducts}
+                                loading={isBaseProductsLoading}
                                 maxTagCount="responsive"
                             >
-                                {salesforceProducts.map((p: any, index: number) => (
-                                    <Option key={index} value={p.name}>{p.name}</Option>
+                                {baseProductsList.map((p: any) => (
+                                    <Option key={p._id} value={p._id}>{p.name}</Option>
                                 ))}
-                                {salesforceProducts.length === 0 && !isFetchingSFProducts && (
-                                    <>
-                                        <Option value="health">Health Insurance</Option>
-                                        <Option value="vehicle">Vehicle Insurance</Option>
-                                        <Option value="life">Life Insurance</Option>
-                                    </>
-                                )}
                             </Select>
                         </div>
                     </Col>

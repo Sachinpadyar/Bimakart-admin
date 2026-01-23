@@ -39,6 +39,9 @@ export const productsApi = apiSlice.injectEndpoints({
         getProductConfig: builder.query({
             query: (id) => `/api/products/${id}/config`,
         }),
+        getBaseProducts: builder.query({
+            query: () => '/api/products/base',
+        }),
     }),
 });
 
@@ -48,5 +51,6 @@ export const {
     useUpdateProductMutation,
     useToggleProductStatusMutation,
     useDeleteProductMutation,
-    useGetProductConfigQuery
+    useGetProductConfigQuery,
+    useGetBaseProductsQuery
 } = productsApi;
