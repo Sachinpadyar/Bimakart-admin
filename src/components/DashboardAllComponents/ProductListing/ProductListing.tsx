@@ -599,7 +599,7 @@ const ProductListing = () => {
                                     </Col>
                                     <Col xs={24} sm={8}>
                                         <div className="form-field">
-                                            <Text className="form-label">Message Template*</Text>
+                                            <Text className="form-label">Message Template</Text>
                                             <Select
                                                 placeholder="Select a template"
                                                 value={formData.messageTemplate || undefined}
