@@ -313,8 +313,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                                         ['bold', 'italic', 'underline'],
                                         [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                                         ['link'],
-                                        [{ 'color': [] }, { 'background': [] }],
-                                        ['clean']
+                                        [{ 'color': [] }, { 'background': [] }]
                                     ]
                                 }}
                                 formats={[

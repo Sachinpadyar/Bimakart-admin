@@ -557,21 +557,20 @@ const ProductListing = () => {
                                                 ['bold', 'italic', 'underline'],
                                                 [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                                                 ['link'],
-                                                [{ 'color': [] }, { 'background': [] }],
-                                                ['clean']
+                                                [{ 'color': [] }, { 'background': [] }]
                                             ]
                                         }}
-                                        formats={[
-                                            'header',
-                                            'bold', 'italic', 'underline',
-                                            'list', 'bullet',
-                                            'link',
-                                            'color', 'background'
-                                        ]}
-                                        style={{
-                                            backgroundColor: '#fff',
-                                            borderRadius: '6px'
-                                        }}
+                                    formats={[
+                                        'header',
+                                        'bold', 'italic', 'underline',
+                                        'list', 'bullet',
+                                        'link',
+                                        'color', 'background'
+                                    ]}
+                                    style={{
+                                        backgroundColor: '#fff',
+                                        borderRadius: '6px'
+                                    }}
                                     />
                                 </div>
 
