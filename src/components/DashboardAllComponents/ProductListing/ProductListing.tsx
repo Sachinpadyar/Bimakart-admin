@@ -119,6 +119,42 @@ const ProductListing = () => {
     const [isFlyerUploading, setIsFlyerUploading] = useState(false);
     const maxChars = 50;
 
+    useEffect(() => {
+        const addTooltips = () => {
+            const toolbars = document.querySelectorAll('.ql-toolbar');
+            toolbars.forEach(toolbar => {
+                const tooltips: Record<string, string> = {
+                    '.ql-bold': 'Bold',
+                    '.ql-italic': 'Italic',
+                    '.ql-underline': 'Underline',
+                    '.ql-list[value="ordered"]': 'Ordered List',
+                    '.ql-list[value="bullet"]': 'Bullet List',
+                    '.ql-link': 'Link',
+                    '.ql-color': 'Text Color',
+                    '.ql-background': 'Background Color',
+                    '.ql-header[value="1"]': 'Heading 1',
+                    '.ql-header[value="2"]': 'Heading 2',
+                    '.ql-header[value="3"]': 'Heading 3',
+                    '.ql-header:not([value])': 'Normal Text',
+                    '.ql-clean': 'Clear Formatting',
+                    '.ql-picker.ql-header': 'Select Header Size'
+                };
+
+                Object.entries(tooltips).forEach(([selector, title]) => {
+                    const elements = toolbar.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        if (!el.hasAttribute('title')) {
+                            el.setAttribute('title', title);
+                        }
+                    });
+                });
+            });
+        };
+
+        const timer = setTimeout(addTooltips, 500);
+        return () => clearTimeout(timer);
+    }, []);
+
 
     // Filter products based on search
     const filteredProducts = products.filter((product: any) =>
@@ -560,17 +596,17 @@ const ProductListing = () => {
                                                 [{ 'color': [] }, { 'background': [] }]
                                             ]
                                         }}
-                                    formats={[
-                                        'header',
-                                        'bold', 'italic', 'underline',
-                                        'list', 'bullet',
-                                        'link',
-                                        'color', 'background'
-                                    ]}
-                                    style={{
-                                        backgroundColor: '#fff',
-                                        borderRadius: '6px'
-                                    }}
+                                        formats={[
+                                            'header',
+                                            'bold', 'italic', 'underline',
+                                            'list', 'bullet',
+                                            'link',
+                                            'color', 'background'
+                                        ]}
+                                        style={{
+                                            backgroundColor: '#fff',
+                                            borderRadius: '6px'
+                                        }}
                                     />
                                 </div>
 
