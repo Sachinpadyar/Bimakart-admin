@@ -382,6 +382,10 @@ const ProductListing = () => {
             showValidationMsg('Please upload an image file.');
             return false;
         }
+        if (file.size > 30 * 1024 * 1024) {
+            showValidationMsg('Icon size must be less than 30MB.');
+            return false;
+        }
         setIsIconUploading(true);
         try {
             const formData = new FormData();
@@ -423,6 +427,11 @@ const ProductListing = () => {
         // Allow image or PDF
         if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
             showValidationMsg('Upload image or PDF.');
+            return false;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+            showValidationMsg('Flyer size must be less than 100MB.');
             return false;
         }
 
@@ -513,7 +522,7 @@ const ProductListing = () => {
                                                     </div>
                                                 </Spin>
                                                 <Text className="icon-upload-label">Upload icon</Text>
-                                                <Text className="icon-upload-hint">jpg or png</Text>
+                                                <Text className="icon-upload-hint">jpg or png (Max 30MB)</Text>
                                             </div>
                                         </Upload>
                                         {uploadedIcon && !isIconUploading && (
@@ -540,7 +549,7 @@ const ProductListing = () => {
                                                     </div>
                                                 </Spin>
                                                 <Text className="icon-upload-label">Upload flyer</Text>
-                                                <Text className="icon-upload-hint">jpg, png or pdf</Text>
+                                                <Text className="icon-upload-hint">jpg, png or pdf (Max 100MB)</Text>
                                             </div>
                                         </Upload>
                                         {uploadedFlyer && !isFlyerUploading && (

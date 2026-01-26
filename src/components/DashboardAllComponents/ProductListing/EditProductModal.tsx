@@ -188,7 +188,14 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
     };
 
     const handleIconUpload = async (file: File) => {
-        if (!file.type.startsWith('image/')) return false;
+        if (!file.type.startsWith('image/')) {
+            notification.error({ message: 'Validation Error', description: 'Please upload an image file.' });
+            return false;
+        }
+        if (file.size > 30 * 1024 * 1024) {
+            notification.error({ message: 'Validation Error', description: 'Icon size must be less than 30MB.' });
+            return false;
+        }
         setIsIconUploading(true);
         try {
             const fd = new FormData();
@@ -212,6 +219,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
     };
 
     const handleFlyerUpload = async (file: File) => {
+        if (file.size > 100 * 1024 * 1024) {
+            notification.error({ message: 'Validation Error', description: 'Flyer size must be less than 100MB.' });
+            return false;
+        }
         setIsFlyerUploading(true);
         try {
             const fd = new FormData();
@@ -433,6 +444,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                                                     <ArrowUp size={20} color="#666" />
                                                 </div>
                                                 <div style={{ color: '#666' }}>Click to Upload</div>
+                                                <div style={{ color: '#999', fontSize: 11, marginTop: 4 }}>Max 30MB</div>
                                             </>
                                         )}
                                     </div>
@@ -480,6 +492,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ open, onCancel, pro
                                                     <ArrowUp size={20} color="#666" />
                                                 </div>
                                                 <div style={{ color: '#666' }}>Click to Upload</div>
+                                                <div style={{ color: '#999', fontSize: 11, marginTop: 4 }}>Max 100MB</div>
                                             </>
                                         )}
                                     </div>
